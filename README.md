@@ -15,7 +15,7 @@ From within the ./bin directory:
 
 * ```python transport.py bucket0```
 
-Once the program is running, the user can paste new files into ```./bucket0``` (or whatever other directory was supplied at execution), or modify the existing ```hello.txt``` file in the ```./bucket0``` directory (if that was the directory supplied).
+Once the program is running, the user can paste new snapshot files into ```./bucket0``` (or whatever other directory was supplied at execution), or modify the existing snapshot files in the ```./bucket0``` directory (if that was the directory supplied).
 
 After doing so, a new file will be created in the ```./bucket1``` directory. The files are stored in the following format: ```original_fname-YEAR-M-D-uuid.txt```, where "original_fname" is the original uploaded file name, and uuid is a unique identifier in the case of repeat uploads or modifications to the same file, and the file ending changes accordingly.
 
