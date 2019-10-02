@@ -40,9 +40,11 @@ from queue import Queue
 from botocore.exceptions import ClientError
 
 
+dirname, filename = os.path.split(os.path.abspath(__file__))
+
 IO_OPTIONS = {
     'stdout_only': False, 'level': 'info',
-    'parentdir': '~/pyspectator/',
+    'parentdir': '{}'.format(dirname),
     'log_filename': 'snapshot_change.log'
 }
 
@@ -302,6 +304,7 @@ if __name__ == "__main__":
         dirname, filename = os.path.split(os.path.abspath(__file__))
         destination_directory = (dirname, './bucket1')
         client = None
+
     elif not (ARGS.access_key, ARGS.secret_key, ARGS.aws_bucket) == (
         None, None, None
     ):
