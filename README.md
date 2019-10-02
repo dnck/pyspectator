@@ -17,7 +17,7 @@ From within the ./bin directory:
 
 Once the program is running, the user can paste new snapshot files into ```./bucket0``` (or whatever other directory was supplied at execution), or modify the existing snapshot files in the ```./bucket0``` directory (if that was the directory supplied).
 
-After doing so, a new file will be created in the ```./bucket1``` directory. The files are stored in the following format: ```original_fname-YEAR-M-D-uuid.txt```, where "original_fname" is the original uploaded file name, and uuid is a unique identifier in the case of repeat uploads or modifications to the same file, and the file ending changes accordingly.
+After doing so, a new file will be created in the ```./bucket1``` directory. The files are stored in the following format: ```uuid/original_fname-YEAR-M-D-uuid.txt```, where "original_fname" is the original uploaded file name, and uuid is a unique identifier in the case of repeat uploads or modifications to the same file, and the file ending changes accordingly.
 
 *Please note there is a timeout on the get() method of the queue objects in the transports.py script of 12 hours. If no events occur in the ./bucket0 directory during these 12 hours, the function will break.*
 
