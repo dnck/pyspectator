@@ -133,7 +133,7 @@ def ship_snapshot(client, complete_snapshot_queue, destination, s3bucket_name):
         )
         # after a get is succcessful
         today_date = datetime.datetime.now().strftime(
-            "%Y-%m-%d-%s"
+            "%Y-%m-%d-%M-%S"
         )
 
         _uuid = str(uuid.uuid4())
@@ -154,7 +154,7 @@ def ship_snapshot(client, complete_snapshot_queue, destination, s3bucket_name):
                     )
                 )
                 success = upload_file(
-                    file_name, s3bucket_name, object_name=fname
+                    client, file_name, s3bucket_name, object_name=fname
                 )
                 print(success)
 
@@ -172,7 +172,7 @@ def local_write_file(client, destination, _uuid, new_file_name):
     with open(new_file_name, "a") as _f:
         _f.write(new_file_name)
 
-def upload_file(fname_on_disk, bucket, object_name=None):
+def upload_file(client, fname_on_disk, bucket, object_name=None):
     """Upload a file to an S3 bucket
 
     :param file_name: File to upload
@@ -186,9 +186,9 @@ def upload_file(fname_on_disk, bucket, object_name=None):
         object_name = fname_on_disk
 
     # Upload the file
-    s3_client = boto3.client('s3')
+    #client = boto3.client('s3')
     try:
-        response = s3_client.upload_file(fname_on_disk, bucket, object_name)
+        response = client.upload_file(fname_on_disk, bucket, object_name)
     except ClientError as e:
         logging.error(e)
         return False
