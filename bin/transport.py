@@ -2,7 +2,7 @@
 """
 This is the summary line.
 
-The python program ```transport.py <full_path_to_folder>```
+The python program ```transport.py <watch_dir>```
 listens to a directory on the local file system for
 new file uploads, or modifications to existing files
 in the directory. Upon an upload or modification,
@@ -27,6 +27,7 @@ pylint score: 10.0/10.0
 imports sorted with isort
 """
 import argparse
+import boto3
 import datetime
 import json
 import os
@@ -35,12 +36,14 @@ import threading
 import time
 import uuid
 from queue import Queue
+from botocore.exceptions import ClientError
 
 
 SNAPSHOT_FILES = ["snapshot.gc", "snapshot.meta", "snapshot.meta.bkp",
     "snapshot.state", "snapshot.state.bkp"
 ]
 WATCH_INTERVAL = 15.0 #seconds
+
 
 def watch_directory(snapshot_directory, incomplete_snapshot_queue):
     """Watch bucket_dir for changes & send new or modified json to a queue."""
@@ -121,7 +124,7 @@ def get_new_files_from_queue(
 
             new_snapshot_files = []
 
-def ship_snapshot(complete_snapshot_queue, destination):
+def ship_snapshot(client, complete_snapshot_queue, destination, s3bucket_name):
     """ship_snapshot files received from nodes."""
     while True:
 
@@ -141,13 +144,21 @@ def ship_snapshot(complete_snapshot_queue, destination):
                 today_date, _uuid, file_name.split(os.sep)[-1]
             )
 
-            # new_file_name = os.path.join(
-            #     destination, fname
-            # )
+            if client is None:
+                local_write_file(client, destination, _uuid, fname)
+            else:
+                new_file_name = os.path.join(destination, fname)
+                print(
+                "uploading file {} to {} as {}".format(
+                    file_name, s3bucket_name, fname
+                    )
+                )
+                success = upload_file(
+                    file_name, s3bucket_name, object_name=fname
+                )
+                print(success)
 
-            send_file(destination, _uuid, fname)
-
-def send_file(destination, _uuid, new_file_name):
+def local_write_file(client, destination, _uuid, new_file_name):
     # pretend like this is a signature
     uuid_pattern = r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}'
     re_uuid = re.compile(uuid_pattern, re.I).findall(new_file_name)
@@ -161,6 +172,27 @@ def send_file(destination, _uuid, new_file_name):
     with open(new_file_name, "a") as _f:
         _f.write(new_file_name)
 
+def upload_file(fname_on_disk, bucket, object_name=None):
+    """Upload a file to an S3 bucket
+
+    :param file_name: File to upload
+    :param bucket: Bucket to upload to
+    :param object_name: S3 object name. If not specified then file_name is used
+    :return: True if file was uploaded, else False
+    """
+
+    # If S3 object_name was not specified, use file_name
+    if object_name is None:
+        object_name = fname_on_disk
+
+    # Upload the file
+    s3_client = boto3.client('s3')
+    try:
+        response = s3_client.upload_file(fname_on_disk, bucket, object_name)
+    except ClientError as e:
+        logging.error(e)
+        return False
+    return True
 
 def mkdir_ifnot_exists(dir_path):
     """Make a directory if it doesn't exist."""
@@ -197,37 +229,54 @@ def get_delta(send_timestamp, receive_timestamp1):
 
 if __name__ == "__main__":
 
-    DEBUG = True
+    DEBUG = False
 
     PARSER = argparse.ArgumentParser(
-        description="Program listens for new .json files"
-        + " in a directory, calculates aggregrates for the file,"
-        + " and writes the result to a new .json file in a seperate directory."
+        description=""
     )
 
     PARSER.add_argument(
-        "full_path_to_folder",
-        metavar="Path of folder to listen to"
-        + " for new json uploads",
+        "watch_dir",
+        metavar="Path of folder to watch for snapshot changes",
         type=str,
-        help="The full_path_to_folder on local filesystem"
-        + " to listen to for uploads.",
+        help="The watch_dir on local filesystem to listen to for changes."
     )
 
     PARSER.add_argument(
-        "-dest",
-        metavar="Path to folder to write"
-        + " new summary .json files",
+        "dest",
+        metavar="",
         type=str,
         default="./bucket1",
-        help="The full path on the local"
-        + " filesystem to write the summary results to.",
+        help=""
+    )
+
+    PARSER.add_argument(
+        "-access_key",
+        metavar="access_key",
+        type=str,
+        default=None,
+        help=""
+    )
+
+    PARSER.add_argument(
+        "-secret_key",
+        metavar="secret_key",
+        type=str,
+        default=None,
+        help=""
+    )
+    PARSER.add_argument(
+        "-aws_bucket",
+        metavar="aws_bucket",
+        type=str,
+        default=None,
+        help=""
     )
 
     ARGS = PARSER.parse_args()
 
     snapshot_directory = os.path.normpath(
-        ARGS.full_path_to_folder
+        ARGS.watch_dir
     )
 
     destination_directory = os.path.normpath(
@@ -241,6 +290,15 @@ if __name__ == "__main__":
     if DEBUG:
         dirname, filename = os.path.split(os.path.abspath(__file__))
         destination_directory = (dirname, './bucket1')
+        client = None
+    elif not (ARGS.access_key, ARGS.secret_key, ARGS.aws_bucket) == (
+        None, None, None
+    ):
+        client = boto3.client(
+            's3',
+            aws_access_key_id=ARGS.access_key,
+            aws_secret_access_key=ARGS.secret_key,
+        )
 
     observe_dir_thread = threading.Thread(
         target=watch_directory,
@@ -254,7 +312,8 @@ if __name__ == "__main__":
 
     ship_snapshot_thread = threading.Thread(
         target=ship_snapshot,
-        args=(complete_snapshot_queue, destination_directory),
+        args=(client, complete_snapshot_queue,
+            destination_directory, ARGS.aws_bucket),
     )
 
     observe_dir_thread.start()

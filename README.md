@@ -1,4 +1,11 @@
 # Transports On the Cloud
+
+# Quickstart
+
+* ```python transport.py ./snapshots /nominee1 -access_key abcdef -secret_key abcdef -aws_bucket my_bucketname```
+
+This will deposit the files in the local directory, ```./snapshot``` into the s3 bucket, ```aws_bucket```, and name them something like, ```nominee1/date-seconds-uuid-filename```. Snapshots can be colocated within the bucket by their uuid.
+
 ## Introduction
 
 The python program ```transport.py <full_path_to_folder>``` listens to a directory on the local file system for file uploads, or modifications to existing files in the directory. Upon an upload or modification, the program summarizes the content of the file, and writes the result to a file in a different directory (the destination path is optionally supplied on command line).
@@ -11,7 +18,7 @@ The user can also provide a second path with the ```-dest_folder``` flag. If thi
 The program uses only standard Python 3.6 packages.
 
 ## Usage
-From within the ./bin directory:
+From within the ./bin directory (when debugging):
 
 * ```python transport.py bucket0```
 
