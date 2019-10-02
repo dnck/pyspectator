@@ -32,12 +32,23 @@ import datetime
 import json
 import os
 import re
+import results_manager
 import threading
 import time
 import uuid
 from queue import Queue
 from botocore.exceptions import ClientError
 
+
+IO_OPTIONS = {
+    'stdout_only': False, 'level': 'info',
+    'parentdir': '~/pyspectator/',
+    'log_filename': 'snapshot_change.log'
+}
+
+log_manager = results_manager.ResultsManager(IO_OPTIONS)
+
+logger = log_manager.logger
 
 SNAPSHOT_FILES = ["snapshot.gc", "snapshot.meta", "snapshot.meta.bkp",
     "snapshot.state", "snapshot.state.bkp"
@@ -75,7 +86,7 @@ def watch_directory(snapshot_directory, incomplete_snapshot_queue):
                     new_file
                 ).st_mtime
 
-                print(new_file)
+                logger.debug("New or modified file: {}".format(new_file))
                 send_to_queue(incomplete_snapshot_queue, new_file)
 
         for mod_file in f_mod_times:
@@ -148,15 +159,15 @@ def ship_snapshot(client, complete_snapshot_queue, destination, s3bucket_name):
                 local_write_file(client, destination, _uuid, fname)
             else:
                 new_file_name = os.path.join(destination, fname)
-                print(
-                "uploading file {} to {} as {}".format(
-                    file_name, s3bucket_name, fname
-                    )
-                )
+
                 success = upload_file(
                     client, file_name, s3bucket_name, object_name=fname
                 )
-                print(success)
+                logger.debug(
+                "Uploaded file {} to {} as {} = {}".format(
+                    file_name, s3bucket_name, fname, success
+                    )
+                )
 
 def local_write_file(client, destination, _uuid, new_file_name):
     # pretend like this is a signature
