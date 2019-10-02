@@ -43,7 +43,7 @@ from botocore.exceptions import ClientError
 dirname, filename = os.path.split(os.path.abspath(__file__))
 
 IO_OPTIONS = {
-    'stdout_only': False, 'level': 'info',
+    'stdout_only': False, 'level': 'debug',
     'parentdir': '{}'.format(dirname),
     'log_filename': 'snapshot_change.log'
 }
@@ -285,6 +285,13 @@ if __name__ == "__main__":
         default=None,
         help=""
     )
+    PARSER.add_argument(
+        "-region_name",
+        metavar="region_name",
+        type=str,
+        default="eu-central-1",
+        help=""
+    )
 
     ARGS = PARSER.parse_args()
 
@@ -312,6 +319,7 @@ if __name__ == "__main__":
             's3',
             aws_access_key_id=ARGS.access_key,
             aws_secret_access_key=ARGS.secret_key,
+            region_name=ARGS.region_name,
         )
 
     observe_dir_thread = threading.Thread(
