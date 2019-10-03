@@ -31,7 +31,8 @@ def main(client, watch_dir, upload_bucket, snapshot_interval):
         tarname = compress_dir(watch_dir, "backups", original_tarname)
         print(watch_dir, '\n', tarname, '\n', upload_bucket, '\n')
         success = upload_dir(
-            client, tarname, upload_bucket, object_name=original_tarname
+            client, tarname, upload_bucket, object_name=\
+                original_tarname+".tar.gz"
         )
         if success:
             logger.info("Shipped tar file: {}".format(tarname))
