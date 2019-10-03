@@ -147,7 +147,7 @@ def ship_snapshot(client, complete_snapshot_queue, destination, s3bucket_name):
         )
         # after a get is succcessful
         today_date = datetime.datetime.now().strftime(
-            "%Y-%m-%d-%M-%S"
+            "%Y-%m-%d-%H-%M-%S"
         )
 
         _uuid = str(uuid.uuid4())

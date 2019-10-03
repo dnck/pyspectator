@@ -25,7 +25,7 @@ def main(client, snapshot_dir, aws_bucket, snapshot_interval):
     while True:
         _uuid = str(uuid.uuid4())
         now_date = datetime.datetime.now().strftime(
-            "%Y-%m-%d-%M-%S"
+            "%Y-%m-%d-%H-%M-%S"
         )
         time_stamp = now_date + "-" + _uuid
         tar_orginal_name = time_stamp+".tar.gz"
