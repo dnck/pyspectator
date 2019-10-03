@@ -27,13 +27,14 @@ def main(client, watch_dir, upload_bucket, snapshot_interval):
         )
         tarname = now_date + "-" + _uuid
         tarname = compress_dir(watch_dir, "backups", tarname)
-        success = upload_dir(
-            client, tarname, upload_bucket, object_name=tarname
-        )
-        if success:
-            logger.info("Shipped tar file: {}".format(tarname))
-            os.remove(tarname)
-        time.sleep(snapshot_interval)
+        print(watch_dir, '\n', tarname, '\n', upload_bucket, '\n')
+        # success = upload_dir(
+        #     client, tarname, upload_bucket, object_name=tarname
+        # )
+        # if success:
+        #     logger.info("Shipped tar file: {}".format(tarname))
+        #     os.remove(tarname)
+        # time.sleep(snapshot_interval)
 
 
 def compress_dir(dir_to_tar, dest_to_tar, tarname):
@@ -72,7 +73,7 @@ if __name__ == "__main__":
         description=""
     )
     PARSER.add_argument(
-        "watch_dir",
+        "-watch_dir",
         metavar="Path of folder to watch for snapshot changes",
         type=str,
         help="The watch_dir on local filesystem to listen to for changes."
