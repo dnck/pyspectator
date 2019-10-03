@@ -21,27 +21,30 @@ log_manager = results_manager.ResultsManager(IO_OPTIONS)
 logger = log_manager.logger
 
 
-def main(client, watch_dir, upload_bucket, snapshot_interval):
+def main(client, snapshot_dir, aws_bucket, snapshot_interval):
     while True:
         _uuid = str(uuid.uuid4())
         now_date = datetime.datetime.now().strftime(
             "%Y-%m-%d-%M-%S"
         )
-        original_tarname = now_date + "-" + _uuid
-        tarname = compress_dir(watch_dir, "backups", original_tarname)
-        print(watch_dir, '\n', tarname, '\n', upload_bucket, '\n')
-        success = upload_dir(
-            client, tarname, upload_bucket, object_name=\
-                original_tarname+".tar.gz"
-        )
-        if success:
-            logger.info("Shipped tar file: {}".format(tarname))
-            os.remove(tarname)
-        time.sleep(snapshot_interval)
+        time_stamp = now_date + "-" + _uuid
+        tar_orginal_name = time_stamp+".tar.gz"
+
+        #tarname = compress_dir(snapshot_dir, time_stamp)
+        #assert(os.path.join("tmp", tar_orginal_name) == tarname)
+
+        #success = upload_dir(
+        #    client, tarname, aws_bucket, object_name=tar_orginal_name
+        #)
+
+        # if success:
+        #     logger.info("Shipped tar file: {}".format(tarname))
+        #     os.remove(tarname)
+        # time.sleep(snapshot_interval)
 
 
-def compress_dir(dir_to_tar, dest_to_tar, tarname):
-    tarname = "{}.tar.gz".format(os.path.join(dest_to_tar, tarname))
+def compress_dir(dir_to_tar, tarname):
+    tarname = "{}.tar.gz".format(os.path.join("tmp", tarname))
     tar = tarfile.open(
         tarname,
         "w:gz"
@@ -50,15 +53,15 @@ def compress_dir(dir_to_tar, dest_to_tar, tarname):
     tar.close()
     return tarname
 
-def upload_dir(client, fname_on_disk, bucket, object_name=None):
+def upload_dir(client, tarname, aws_bucket, object_name=None):
     """Upload a file to an S3 bucket
     """
     # If S3 object_name was not specified, use file_name
     if object_name is None:
-        object_name = fname_on_disk
+        object_name = tarname
     # Upload the file
     try:
-        response = client.upload_file(fname_on_disk, bucket, object_name)
+        response = client.upload_file(tarname, aws_bucket, object_name)
     except ClientError as e:
         logging.error(e)
         return False
@@ -67,7 +70,6 @@ def upload_dir(client, fname_on_disk, bucket, object_name=None):
 def mkdir_ifnot_exists(dir_path):
     """Make a directory if it doesn't exist."""
     if not os.path.isdir(dir_path):
-
         os.mkdir(dir_path)
 
 if __name__ == "__main__":
@@ -76,12 +78,18 @@ if __name__ == "__main__":
         description=""
     )
     PARSER.add_argument(
-        "-watch_dir",
+        "-snapshot_dir",
         metavar="Path of folder to watch for snapshot changes",
         type=str,
-        help="The watch_dir on local filesystem to listen to for changes."
+        help="The snapshot_dir on local filesystem to listen to for changes."
     )
-
+    PARSER.add_argument(
+        "-snapshot_interval",
+        metavar="snapshot_interval",
+        type=float,
+        default=600.0,#10 minutes
+        help=""
+    )
     PARSER.add_argument(
         "-access_key",
         metavar="access_key",
@@ -110,19 +118,12 @@ if __name__ == "__main__":
         default="eu-central-1",
         help=""
     )
-    PARSER.add_argument(
-        "-snapshot_interval",
-        metavar="snapshot_interval",
-        type=float,
-        default=600.0,#10 minutes
-        help=""
-    )
 
     ARGS = PARSER.parse_args()
 
-    mkdir_ifnot_exists("backups")
+    mkdir_ifnot_exists("tmp")
 
-    watch_dir = ARGS.watch_dir
+    snapshot_dir = ARGS.snapshot_dir
 
     snapshot_interval = ARGS.snapshot_interval
 
@@ -146,6 +147,6 @@ if __name__ == "__main__":
     else:
         raise ValueError("Missing input parameters")
 
-    upload_bucket = ARGS.aws_bucket
+    aws_bucket = ARGS.aws_bucket
 
-    main(client, watch_dir, upload_bucket, snapshot_interval)
+    main(client, snapshot_dir, aws_bucket, snapshot_interval)
