@@ -27,11 +27,11 @@ def main(client, watch_dir, upload_bucket, snapshot_interval):
         now_date = datetime.datetime.now().strftime(
             "%Y-%m-%d-%M-%S"
         )
-        tarname = now_date + "-" + _uuid
-        tarname = compress_dir(watch_dir, "backups", tarname)
+        original_tarname = now_date + "-" + _uuid
+        tarname = compress_dir(watch_dir, "backups", original_tarname)
         print(watch_dir, '\n', tarname, '\n', upload_bucket, '\n')
         success = upload_dir(
-            client, tarname, upload_bucket, object_name=tarname
+            client, tarname, upload_bucket, object_name=original_tarname
         )
         if success:
             logger.info("Shipped tar file: {}".format(tarname))
