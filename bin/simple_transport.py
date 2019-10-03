@@ -30,13 +30,13 @@ def main(client, watch_dir, upload_bucket, snapshot_interval):
         tarname = now_date + "-" + _uuid
         tarname = compress_dir(watch_dir, "backups", tarname)
         print(watch_dir, '\n', tarname, '\n', upload_bucket, '\n')
-        # success = upload_dir(
-        #     client, tarname, upload_bucket, object_name=tarname
-        # )
-        # if success:
-        #     logger.info("Shipped tar file: {}".format(tarname))
-        #     os.remove(tarname)
-        # time.sleep(snapshot_interval)
+        success = upload_dir(
+            client, tarname, upload_bucket, object_name=tarname
+        )
+        if success:
+            logger.info("Shipped tar file: {}".format(tarname))
+            os.remove(tarname)
+        time.sleep(snapshot_interval)
 
 
 def compress_dir(dir_to_tar, dest_to_tar, tarname):
