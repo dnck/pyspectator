@@ -33,6 +33,7 @@ import json
 import os
 import re
 import results_manager
+import tarfile
 import threading
 import time
 import uuid
@@ -173,33 +174,46 @@ def ship_snapshot(client, complete_snapshot_queue, destination, s3bucket_name):
 
 def local_write_file(client, destination, _uuid, new_file_name):
     # pretend like this is a signature
+    MAKE_TAR = True
     uuid_pattern = r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}'
     re_uuid = re.compile(uuid_pattern, re.I).findall(new_file_name)
+
     try:
         _uuid == re_uuid.pop()
         new_snapshot_dir = "./bucket1/{}".format(_uuid)
+
         mkdir_ifnot_exists(new_snapshot_dir)
+
+        if MAKE_TAR:
+            compress_dir(
+                "/Users/cook/Helix/pendulum-1/mainnet",
+                new_snapshot_dir, _uuid
+            )
+        else:
+            new_file_name = os.path.join(new_snapshot_dir, new_file_name)
+            with open(new_file_name, "a") as _f:
+                _f.write(new_file_name)
+
     except IndexError as error:
         print("Pattern does not match!")
-    new_file_name = os.path.join(new_snapshot_dir, new_file_name)
-    with open(new_file_name, "a") as _f:
-        _f.write(new_file_name)
+
+
+
+def compress_dir(dir_to_tar, dest_to_tar, tarname):
+    tar = tarfile.open(
+        "{}.tar.gz".format(os.path.join(dest_to_tar, tarname)),
+        "w:gz"
+    )
+    tar.add("{}".format(os.path.normpath(dir_to_tar)), arcname=tarname)
+    tar.close()
 
 def upload_file(client, fname_on_disk, bucket, object_name=None):
     """Upload a file to an S3 bucket
-
-    :param file_name: File to upload
-    :param bucket: Bucket to upload to
-    :param object_name: S3 object name. If not specified then file_name is used
-    :return: True if file was uploaded, else False
     """
-
     # If S3 object_name was not specified, use file_name
     if object_name is None:
         object_name = fname_on_disk
-
     # Upload the file
-    #client = boto3.client('s3')
     try:
         response = client.upload_file(fname_on_disk, bucket, object_name)
     except ClientError as e:
@@ -242,7 +256,7 @@ def get_delta(send_timestamp, receive_timestamp1):
 
 if __name__ == "__main__":
 
-    DEBUG = False
+    DEBUG = True
 
     PARSER = argparse.ArgumentParser(
         description=""
@@ -292,6 +306,13 @@ if __name__ == "__main__":
         default="eu-central-1",
         help=""
     )
+    PARSER.add_argument(
+        "-debug",
+        metavar="debug",
+        type=lambda s: s.lower() in ['true', 't', 'yes', '1'],
+        default="True",
+        help=""
+    )
 
     ARGS = PARSER.parse_args()
 
@@ -307,7 +328,7 @@ if __name__ == "__main__":
 
     complete_snapshot_queue = Queue()
 
-    if DEBUG:
+    if ARGS.debug:
         dirname, filename = os.path.split(os.path.abspath(__file__))
         destination_directory = (dirname, './bucket1')
         client = None
