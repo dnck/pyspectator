@@ -2,7 +2,7 @@
 
 # Quickstart
 
-* ```python transport.py ./snapshots /nominee1 -access_key abcdef -secret_key abcdef -aws_bucket my_bucketname```
+* ```python transport.py ./snapshots /nominee1 -access_key abcdef -secret_key abcdef -aws_bucket my_bucketname -aws_region my_s3_region```
 
 This will deposit the files in the local directory, ```./snapshot``` into the s3 bucket, ```aws_bucket```, and name them something like, ```nominee1/date-seconds-uuid-filename```. Snapshots can be colocated within the bucket by their uuid.
 
