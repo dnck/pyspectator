@@ -30,17 +30,17 @@ def main(client, snapshot_dir, aws_bucket, snapshot_interval):
         time_stamp = now_date + "-" + _uuid
         tar_orginal_name = time_stamp+".tar.gz"
 
-        #tarname = compress_dir(snapshot_dir, time_stamp)
-        #assert(os.path.join("tmp", tar_orginal_name) == tarname)
+        tarname = compress_dir(snapshot_dir, time_stamp)
+        assert(os.path.join("tmp", tar_orginal_name) == tarname)
 
-        #success = upload_dir(
-        #    client, tarname, aws_bucket, object_name=tar_orginal_name
-        #)
+        success = upload_dir(
+           client, tarname, aws_bucket, object_name=tar_orginal_name
+        )
 
-        # if success:
-        #     logger.info("Shipped tar file: {}".format(tarname))
-        #     os.remove(tarname)
-        # time.sleep(snapshot_interval)
+        if success:
+            logger.info("Shipped tar file: {}".format(tarname))
+            os.remove(tarname)
+        time.sleep(snapshot_interval)
 
 
 def compress_dir(dir_to_tar, tarname):
