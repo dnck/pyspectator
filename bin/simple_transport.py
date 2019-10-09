@@ -11,7 +11,7 @@ dirname, filename = os.path.split(os.path.abspath(__file__))
 
 
 IO_OPTIONS = {
-    'stdout_only': True, 'level': 'debug',
+    'stdout_only': False, 'level': 'debug',
     'parentdir': '{}'.format(dirname),
     'log_filename': 'snapshot_change.log'
 }
