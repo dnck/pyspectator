@@ -1,5 +1,7 @@
 # Transports On the Cloud
 
+**This repo is deprecated! I leave it up because it could be adapted to use the dotenv package and store secrets in a secure .env file, which would make the package usable. As it stands, it is not usable. Don't pass your aws keys to this script. That is bad practice ;)**
+
 # Quickstart
 
 * ```python transport.py ./snapshots /nominee1 -access_key abcdef -secret_key abcdef -aws_bucket my_bucketname -aws_region my_s3_region```
